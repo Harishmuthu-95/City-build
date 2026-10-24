@@ -1,3 +1,4 @@
+import json
 import math
 import os
 import random
@@ -7,9 +8,9 @@ import pygame
 
 pygame.init()
 
-# ==================================================
-# SETTINGS
-# ==================================================
+# ============================
+# WINDOW SETUP
+# ============================
 WIDTH, HEIGHT = 1200, 760
 PANEL_WIDTH = 240
 MAP_WIDTH = WIDTH - PANEL_WIDTH
@@ -24,26 +25,26 @@ font = pygame.font.SysFont("arial", 18)
 small_font = pygame.font.SysFont("arial", 14)
 big_font = pygame.font.SysFont("arial", 24)
 
-# ==================================================
+# ============================
 # COLORS
-# ==================================================
-GRASS = (200, 230, 180)
-DOT = (165, 185, 155)
-ROAD_DARK = (84, 88, 93)
-ROAD_LIGHT = (220, 220, 210)
+# ============================
+GRASS = (199, 232, 181)
+DOT = (166, 184, 156)
+ROAD_DARK = (85, 89, 94)
+ROAD_LIGHT = (226, 226, 216)
 PANEL = (38, 44, 52)
-TOP = (42, 50, 58)
+TOP = (43, 50, 58)
 WHITE = (250, 250, 245)
-BLACK = (20, 25, 30)
-YELLOW = (255, 210, 80)
-GREEN = (74, 180, 90)
-RED = (230, 85, 70)
-BLUE = (90, 140, 235)
-PINK = (220, 160, 240)
+BLACK = (17, 21, 26)
+YELLOW = (255, 212, 87)
+GREEN = (82, 182, 93)
+RED = (230, 90, 72)
+BLUE = (98, 142, 236)
+PINK = (221, 160, 242)
 
-# ==================================================
-# STATE
-# ==================================================
+# ============================
+# GAME STATE
+# ============================
 money = 350
 roads = []
 buildings = []
@@ -59,12 +60,11 @@ message = ""
 message_timer = 0
 car_timer = 0
 income_timer = 0
-
 SAVE_FILE = "city_save.json"
 
-# ==================================================
+# ============================
 # HELPERS
-# ==================================================
+# ============================
 def draw_text(text, x, y, color=WHITE, f=font):
     image = f.render(str(text), True, color)
     screen.blit(image, (int(x), int(y)))
@@ -142,17 +142,17 @@ def maybe_overlap_anything(pos):
     return building_at(pos) is not None or road_at(pos) is not None
 
 
-# ==================================================
-# BUILDINGS
-# ==================================================
+# ============================
+# DRAW BUILDINGS
+# ============================
 def draw_house(building):
     x = int(building["x"])
     y = int(building["y"])
-    pygame.draw.rect(screen, (235, 205, 160), (x - 18, y - 10, 36, 28), border_radius=4)
-    pygame.draw.polygon(screen, (165, 85, 55), [(x - 23, y - 10), (x, y - 30), (x + 23, y - 10)])
-    pygame.draw.rect(screen, (105, 70, 50), (x - 6, y + 4, 12, 14))
-    pygame.draw.rect(screen, (110, 180, 240), (x - 12, y - 4, 7, 9))
-    pygame.draw.rect(screen, (110, 180, 240), (x + 5, y - 4, 7, 9))
+    pygame.draw.rect(screen, (233, 202, 157), (x - 18, y - 9, 36, 28), border_radius=4)
+    pygame.draw.polygon(screen, (166, 86, 58), [(x - 23, y - 10), (x, y - 30), (x + 23, y - 10)])
+    pygame.draw.rect(screen, (100, 68, 50), (x - 6, y + 4, 12, 14))
+    pygame.draw.rect(screen, (111, 181, 240), (x - 12, y - 4, 7, 9))
+    pygame.draw.rect(screen, (111, 181, 240), (x + 5, y - 4, 7, 9))
 
 
 def draw_hospital(building):
@@ -168,7 +168,7 @@ def draw_fuel_station(building):
     x = int(building["x"])
     y = int(building["y"])
     pygame.draw.rect(screen, (225, 80, 80), (x - 20, y - 20, 40, 40), border_radius=6)
-    pygame.draw.circle(screen, (225, 225, 225), (x, y), 12)
+    pygame.draw.circle(screen, (245, 245, 245), (x, y), 12)
     pygame.draw.line(screen, (225, 80, 80), (x, y - 16), (x, y + 16), 3)
     pygame.draw.line(screen, (225, 80, 80), (x - 16, y), (x + 16, y), 3)
     draw_text("F", x - 6, y - 12, WHITE, big_font)
@@ -177,10 +177,10 @@ def draw_fuel_station(building):
 def draw_bridge(building):
     x = int(building["x"])
     y = int(building["y"])
-    pygame.draw.rect(screen, (120, 100, 80), (x - 25, y - 10, 50, 14), border_radius=3)
+    pygame.draw.rect(screen, (118, 98, 80), (x - 25, y - 10, 50, 14), border_radius=3)
     pygame.draw.rect(screen, (130, 120, 90), (x - 20, y - 22, 8, 22))
     pygame.draw.rect(screen, (130, 120, 90), (x + 12, y - 22, 8, 22))
-    pygame.draw.arc(screen, (70, 75, 80), (x - 22, y - 20, 44, 35), 0, math.pi, 4)
+    pygame.draw.arc(screen, (70, 74, 80), (x - 22, y - 20, 44, 35), 0, math.pi, 4)
 
 
 def draw_building(building):
@@ -200,9 +200,9 @@ def draw_building(building):
         pygame.draw.circle(screen, YELLOW, (building["x"], building["y"]), 30, 2)
 
 
-# ==================================================
-# ROADS
-# ==================================================
+# ============================
+# DRAW ROAD
+# ============================
 def draw_road(road):
     points = road["points"]
     if len(points) >= 2:
@@ -221,20 +221,23 @@ def draw_road(road):
             pygame.draw.circle(screen, YELLOW, (int(p[0]), int(p[1])), 5, 2)
 
 
+# ============================
+# BUILDING / UPGRADING / CARS
+# ============================
 def place_building(kind, pos):
     cost = get_building_cost(kind)
     if money < cost:
         show_message("Not enough money!")
-        return
+        return None
+
     if maybe_overlap_anything(pos):
         show_message("You cannot build there.")
-        return
+        return None
 
     building = {"type": kind, "x": pos[0], "y": pos[1], "level": 1}
     buildings.append(building)
     money -= cost
     selected_object = building
-    dragging_building = building
     show_message(f"{kind} built!")
     return building
 
@@ -311,14 +314,18 @@ def update_cars(dt):
         car["y"] = a[1] + (b[1] - a[1]) * t
 
 
-# ==================================================
+# ============================
 # SAVE / LOAD
-# ==================================================
+# ============================
 def save_game():
-    data = {"money": money, "roads": roads, "buildings": buildings}
+    data = {
+        "money": money,
+        "roads": roads,
+        "buildings": buildings,
+    }
     try:
         with open(SAVE_FILE, "w") as file:
-            file.write(str(data).replace("'", '"'))
+            json.dump(data, file)
         show_message("City saved!")
     except OSError as error:
         show_message(f"Could not save: {error}")
@@ -326,14 +333,14 @@ def save_game():
 
 def load_game():
     global money, roads, buildings, selected_object, vehicles
+
     if not os.path.exists(SAVE_FILE):
         show_message("No saved city.")
         return
 
     try:
         with open(SAVE_FILE, "r") as file:
-            raw = file.read()
-        data = eval(raw, {"__builtins__": {}}, {})
+            data = json.load(file)
         money = data.get("money", money)
         roads = data.get("roads", [])
         buildings = data.get("buildings", [])
@@ -344,13 +351,13 @@ def load_game():
         show_message(f"Could not load: {error}")
 
 
-# ==================================================
+# ============================
 # DRAW GAME
-# ==================================================
+# ============================
 def draw_game():
     screen.fill(GRASS)
 
-    # dotted grid background
+    # dotted grid
     for x in range(0, MAP_WIDTH + 20, 20):
         for y in range(TOP_BAR, HEIGHT + 20, 20):
             pygame.draw.circle(screen, DOT, (x, y), 2)
@@ -373,8 +380,8 @@ def draw_game():
     # top bar
     pygame.draw.rect(screen, TOP, (0, 0, WIDTH, TOP_BAR))
     draw_text("TINY CITY BUILDER", 16, 16, YELLOW, big_font)
-    draw_text(f"Money: ${money}", 430, 18, WHITE)
-    draw_text(f"Roads: {len(roads)}", 620, 18, WHITE)
+    draw_text(f"Money: ${money}", 470, 18, WHITE)
+    draw_text(f"Roads: {len(roads)}", 610, 18, WHITE)
     draw_text(f"Buildings: {len(buildings)}", 780, 18, WHITE)
     draw_text(f"Cars: {len(vehicles)}", 980, 18, WHITE)
 
@@ -388,7 +395,7 @@ def draw_game():
         ("Hospital", "Hospital"),
         ("Fuel Station", "Fuel"),
         ("Bridge", "Bridge"),
-        ("Move", "Move")
+        ("Move", "Move"),
     ]
 
     for i, (key, label) in enumerate(menu):
@@ -430,9 +437,9 @@ def draw_game():
         draw_text(message, 25, HEIGHT - 35, YELLOW, small_font)
 
 
-# ==================================================
+# ============================
 # MAIN LOOP
-# ==================================================
+# ============================
 while True:
     dt = min(clock.tick(FPS) / 1000.0, 0.05)
 
@@ -448,14 +455,13 @@ while True:
             mx, my = event.pos
 
             if mx >= MAP_WIDTH:
-                # menu buttons
                 for i, (key, label) in enumerate([
                     ("Road", "Road"),
                     ("House", "House"),
                     ("Hospital", "Hospital"),
                     ("Fuel Station", "Fuel"),
                     ("Bridge", "Bridge"),
-                    ("Move", "Move")
+                    ("Move", "Move"),
                 ]):
                     y = 70 + i * 48
                     if MAP_WIDTH + 14 <= mx <= WIDTH - 14 and y <= my <= y + 38:
